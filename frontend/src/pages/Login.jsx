@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import LoginSuccessBanner from '../components/LoginSuccessBanner';
 
 const Login = ({ setUser }) => {
     const [username, setUsername] = useState('');
@@ -8,6 +9,8 @@ const Login = ({ setUser }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
+    const [loggedInUser, setLoggedInUser] = useState(null);
+    const [showSuccess, setShowSuccess] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -39,9 +42,10 @@ const Login = ({ setUser }) => {
                 }
                 localStorage.setItem('user', JSON.stringify(data.user));
                 localStorage.setItem('token', data.token);
-                setUser(data.user);
-                // No need to navigate manually if App.jsx handles user state redirection, but just in case:
-                navigate('/');
+                
+                // 🔥 KÍCH HOẠT HIỆU ỨNG GAME BANNER
+                setLoggedInUser(data.user);
+                setShowSuccess(true);
             } else {
                 setError(data.message || 'Tài khoản hoặc mật khẩu không đúng!');
             }
@@ -159,6 +163,17 @@ const Login = ({ setUser }) => {
                     </motion.button>
                 </div>
             </motion.div>
+
+            {/* 🔥 CHÈN BANNER ĐẰNG SAU FORM ĐỂ KHI CẦN SẼ PHỦ LÊN MÀN HÌNH */}
+            {showSuccess && (
+                <LoginSuccessBanner 
+                    username={loggedInUser.username} 
+                    onComplete={() => {
+                        setUser(loggedInUser);
+                        navigate('/');
+                    }} 
+                />
+            )}
         </motion.div>
     );
 };
