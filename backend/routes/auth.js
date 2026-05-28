@@ -42,7 +42,7 @@ router.post('/register', async (req, res) => {
 
     } catch (error) {
         console.error('Lỗi đăng ký:', error);
-        return res.status(500).json({ success: false, message: 'Có lỗi xảy ra từ phía máy chủ' });
+        return res.status(500).json({ success: false, message: 'Có lỗi xảy ra từ phía máy chủ: ' + error.message });
     }
 });
 
