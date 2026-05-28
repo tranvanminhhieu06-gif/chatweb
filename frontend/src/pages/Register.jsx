@@ -21,27 +21,13 @@ const Register = ({ setUser }) => {
                 body: JSON.stringify({ username, password })
             });
             
-            const registerData = await registerRes.json();
+            const data = await registerRes.json();
             
-            if (registerData.success) {
-                // Bước 2: Tự động Đăng nhập ngay sau khi đăng ký thành công
-                const loginRes = await fetch('http://localhost:3000/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const loginData = await loginRes.json();
-                
-                if (loginData.success) {
-                    localStorage.setItem('user', JSON.stringify(loginData.user));
-                    localStorage.setItem('token', loginData.token);
-                    setUser(loginData.user);
-                    navigate('/'); // Chuyển thẳng vào Sảnh chờ
-                } else {
-                    setError('Đăng ký thành công nhưng tự động đăng nhập thất bại.');
-                }
+            if (data.success) {
+                alert(data.message);
+                navigate('/login');
             } else {
-                setError(registerData.message || 'Đăng ký thất bại!');
+                setError(data.message || 'Đăng ký thất bại!');
             }
         } catch (err) {
             console.error(err);
