@@ -1,104 +1,104 @@
 import React, { useEffect, useState } from 'react';
 
 const LoginSuccessBanner = ({ username, onComplete }) => {
-  // Các bước chuyển động (Timeline)
-  const [showOverlay, setShowOverlay] = useState(false);
-  const [stretchBanner, setStretchBanner] = useState(false);
-  const [revealText, setRevealText] = useState(false);
-  const [fadeOut, setFadeOut] = useState(false);
+  // Trạng thái vòng đời hiệu ứng: 'hidden' -> 'drop' -> 'expand' -> 'reveal' -> 'fadeout'
+  const [animationState, setAnimationState] = useState('hidden');
 
   useEffect(() => {
-    // Bước 1: Phủ lớp màn mờ tối nền sau 50ms
-    const t1 = setTimeout(() => setShowOverlay(true), 50);
+    // 1. Kích hoạt quả cầu rơi từ trên xuống ngay lập tức
+    setAnimationState('drop');
 
-    // Bước 2: Banner bắt đầu quét/giãn thẳng ra theo chiều ngang từ tâm (sau 300ms)
-    const t2 = setTimeout(() => setStretchBanner(true), 300);
+    // 2. Sau 600ms (khi quả cầu chạm tâm), chuyển sang hiệu ứng giãn rộng ra 2 bên
+    const timerExpand = setTimeout(() => {
+      setAnimationState('expand');
+    }, 600);
 
-    // Bước 3: Banner giãn xong, chữ "LOGIN SUCCESSFUL" và Username hiện ra với hiệu ứng loang/trượt (sau 800ms)
-    const t3 = setTimeout(() => setRevealText(true), 800);
+    // 3. Sau 1100ms (khi thanh ngang giãn xong), cho nội dung bên trong hiện ra
+    const timerReveal = setTimeout(() => {
+      setAnimationState('reveal');
+    }, 1100);
 
-    // Bước 4: Giữ nguyên hiệu ứng trong 2.5 giây rồi bắt đầu làm mờ dần toàn bộ (Fade out)
-    const t4 = setTimeout(() => setFadeOut(true), 3300);
+    // 4. Giữ hiển thị 2.5 giây rồi tiến hành mờ dần toàn bộ (Fade out)
+    const timerFadeOut = setTimeout(() => {
+      setAnimationState('fadeout');
+    }, 3600);
 
-    // Bước 5: Kết thúc hoàn toàn và chuyển trang (sau khi fade out xong)
-    const t5 = setTimeout(() => {
+    // 5. Kết thúc hoàn toàn và chuyển trang
+    const timerComplete = setTimeout(() => {
       if (onComplete) onComplete();
-    }, 3800);
+    }, 4100);
 
     return () => {
-      [t1, t2, t3, t4, t5].forEach(clearTimeout);
+      clearTimeout(timerExpand);
+      clearTimeout(timerReveal);
+      clearTimeout(timerFadeOut);
+      clearTimeout(timerComplete);
     };
   }, [onComplete]);
 
+  if (animationState === 'hidden') return null;
+
   return (
     <>
-      {/* 💥 SECRET WEAPON: SVG Filter tạo hiệu ứng viền rách/vệt cọ nham nhở tự nhiên như video */}
-      <svg className="absolute w-0 h-0 pointer-events-none">
-        <defs>
-          <filter id="cinematic-torn-edge">
-            {/* Tạo ra nhiễu hạt fractal tự nhiên */}
-            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise" />
-            {/* Dùng nhiễu hạt để làm lệch/méo các đường biên của SourceGraphic */}
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="18" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
+      {/* Nhúng mã Keyframe CSS để tạo độ nảy mượt mà cho quả cầu rơi */}
+      <style>{`
+        @keyframes circleDropFromTop {
+          0% { transform: translateY(-100vh) scale(0.3); opacity: 0; }
+          60% { transform: translateY(20px) scale(1.1); opacity: 1; }
+          80% { transform: translateY(-10px) scale(0.95); }
+          100% { transform: translateY(0) scale(1); }
+        }
+        .animate-circle-drop {
+          animation: circleDropFromTop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+      `}</style>
 
-      {/* 1. LỚP NỀN OVERLAY: Mờ tối, đậm chất điện ảnh */}
-      <div
-        className={`fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md transition-opacity duration-500
-          ${showOverlay ? 'opacity-100' : 'opacity-0'}
-          ${fadeOut ? 'opacity-0' : ''}`}
+      {/* LỚP NỀN OVERLAY TỐI MỜ CỦA GAME */}
+      <div 
+        className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-500
+          ${animationState === 'fadeout' ? 'opacity-0' : 'opacity-100'}`}
       >
-        {/* 2. BANNER CHÍNH: Màu tối, áp filter viền rách, hiệu ứng giãn ngang (scale-x) */}
+        {/* BANNER CHÍNH: Thay đổi hình dạng từ hình tròn sang thanh ngang */}
         <div
-          className={`relative bg-[#161616] text-center max-w-xl w-full py-10 px-6 transform transition-all cubic-bezier(0.25, 1, 0.5, 1)
-            ${stretchBanner ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}
-            ${stretchBanner ? 'duration-700' : 'duration-0'}`}
-          style={{
-            filter: 'url(#cinematic-torn-edge)', // Kích hoạt viền rách xịn
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(0,0,0,0.6)'
-          }}
+          className={`bg-[#141414] border-4 border-black flex items-center justify-between px-8 shadow-[12px_12px_0px_0px_#000] transform transition-all ease-in-out
+            ${animationState === 'drop' ? 'animate-circle-drop w-20 h-20 rounded-full' : ''}
+            ${animationState === 'expand' || animationState === 'reveal' || animationState === 'fadeout' 
+              ? 'w-full max-w-2xl h-28 rounded-2xl duration-500' : ''}`}
         >
-          {/* Họa tiết tia sáng quét tinh tế bên trong banner */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite] pointer-events-none" />
-
-          {/* 3. TIÊU ĐỀ TRÊN: Hiện ra kết hợp giãn khoảng cách chữ (Letter-spacing tracking) */}
-          <h2
-            className={`text-[#e63946] font-extrabold text-2xl uppercase tracking-[0.3em] font-['Space_Grotesk'] transition-all duration-1000 transform
-              ${revealText ? 'opacity-100 translate-y-0 filter blur-0 scale-100' : 'opacity-0 -translate-y-2 filter blur-sm scale-95'}`}
-            style={{ textShadow: '0 0 10px rgba(230, 57, 70, 0.4)' }}
+          
+          {/* NỘI DUNG CHỈ HIỂN THỊ KHI BANNER ĐÃ GIÃN XONG */}
+          <div 
+            className={`w-full flex items-center justify-between transition-opacity duration-300
+              ${animationState === 'reveal' ? 'opacity-100' : 'opacity-0'}`}
           >
-            LOGIN SUCCESSFUL
-          </h2>
+            
+            {/* 👈 BÊN TRÁI: ICON HÌNH NGƯỜI */}
+            <div className="flex-shrink-0 w-12 h-12 bg-[#4ecdc4] border-2 border-black rounded-xl flex items-center justify-center shadow-[3px_3px_0px_0px_#000]">
+              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </div>
 
-          {/* Đường gạch ngang mảnh đậm nét cinematic ngăn cách */}
-          <div
-            className={`h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent my-4 mx-auto transition-all duration-700 w-3/4
-              ${revealText ? 'scale-x-100' : 'scale-x-0'}`}
-          />
+            {/* 🎯 Ở GIỮA: CHỮ LỚN LÀ TÊN TÀI KHOẢN, CHỮ NHỎ LÀ TRẠNG THÁI */}
+            <div className="flex flex-col items-center justify-center text-center flex-grow mx-4">
+              {/* Chữ lớn: Tên tài khoản */}
+              <h1 className="text-white font-black text-3xl md:text-4xl tracking-wide uppercase font-['Space_Grotesk'] drop-shadow-[2px_2px_0px_#000]">
+                {username}
+              </h1>
+              {/* Chữ nhỏ: Thông báo đăng nhập thành công */}
+              <p className="text-[#ff6b6b] font-bold text-xs md:text-sm tracking-[0.2em] uppercase mt-1">
+                ĐĂNG NHẬP THÀNH CÔNG
+              </p>
+            </div>
 
-          {/* 4. TÊN USERNAME: Hiện muộn hơn một chút, trượt nhẹ từ dưới lên, KHÔNG CÓ AVATAR */}
-          <div
-            className={`transition-all duration-1000 delay-200 transform
-              ${revealText ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          >
-            <p className="text-gray-500 text-xs font-semibold tracking-[0.4em] uppercase mb-1">
-              Welcome Back Captain
-            </p>
-            <h1 className="text-white font-black text-4xl md:text-5xl tracking-wide font-['Space_Grotesk'] drop-shadow-lg">
-              {username}
-            </h1>
+            {/* 👉 BÊN PHẢI: KHUNG ẨN ĐỐI XỨNG (ĐÃ BỎ AVATAR NHƯNG GIỮ KHUNG ĐỂ CÂN BẰNG TÂM) */}
+            <div className="flex-shrink-0 w-12 h-12 invisible">
+              {/* Mục này ẩn đi giúp phần chữ ở giữa luôn được neo chính xác tại tâm của banner */}
+            </div>
+
           </div>
         </div>
       </div>
-
-      {/* Inject animation keyframe tùy biến cho hiệu ứng vệt sáng chạy qua banner */}
-      <style>{`
-        @keyframes shimmer {
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
     </>
   );
 };
