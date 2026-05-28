@@ -99,7 +99,7 @@ const LoginSuccessBanner = ({ username, onComplete }) => {
               </h1>
               {/* Chữ nhỏ trạng thái quyền truy cập */}
               <p className="text-[#ff6b6b] font-extrabold text-xs md:text-sm tracking-[0.25em] uppercase mt-1">
-                Free Access
+                ĐĂNG NHẬP THÀNH CÔNG
               </p>
             </div>
 
