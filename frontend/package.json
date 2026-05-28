@@ -1,0 +1,15 @@
+{
+  "name": "chatweb",
+  "version": "1.0.0",
+  "description": "Ứng dụng ChatWeb thời gian thực",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "framer-motion": "^12.40.0",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.8.3"
+  }
+}
