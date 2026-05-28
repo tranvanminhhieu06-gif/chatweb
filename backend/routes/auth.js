@@ -18,6 +18,17 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ tài khoản và mật khẩu' });
     }
 
+    // 🔥 ĐOẠN CODE KIỂM TRA MẬT KHẨU CÓ CẢ HOA VÀ THƯỜNG:
+    // Luật: Ít nhất 1 chữ thường (?=.*[a-z]), ít nhất 1 chữ hoa (?=.*[A-Z]), độ dài tối thiểu 6 ký tự (.{6,})
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
+    
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Mật khẩu phải dài từ 6 ký tự trở lên, bao gồm cả chữ in hoa và chữ in thường!' 
+        });
+    }
+
     try {
         // Kiểm tra xem tên tài khoản đã tồn tại trong MySQL chưa
         const [existingUser] = await db.query('SELECT id FROM users WHERE username = ?', [username]);
