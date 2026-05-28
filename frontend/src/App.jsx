@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import MemphisBg from './components/MemphisBg';
 
@@ -19,7 +20,7 @@ function App() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Background cố định toàn trang */}
+      {/* Background cố định toàn trang với hiệu ứng pháo hoa */}
       <MemphisBg />
       
       {/* Container chính đè lên trên background */}
@@ -31,8 +32,12 @@ function App() {
               element={user ? <Navigate to="/" /> : <Login setUser={setUser} />} 
             />
             <Route 
+              path="/register" 
+              element={user ? <Navigate to="/" /> : <Register setUser={setUser} />} 
+            />
+            <Route 
               path="/" 
-              element={user ? <Dashboard currentUser={user} currentRoomId="general" /> : <Navigate to="/login" />} 
+              element={user ? <Dashboard currentUser={user} /> : <Navigate to="/login" />} 
             />
           </Routes>
         </AnimatePresence>

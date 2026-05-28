@@ -1,49 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-const Login = ({ setUser }) => {
+const Register = ({ setUser }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
-
-    useEffect(() => {
-        const savedUsername = localStorage.getItem('saved_username');
-        if (savedUsername) {
-            setUsername(savedUsername);
-            setRememberMe(true);
-        }
-    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
         try {
-            const response = await fetch('http://localhost:3000/api/auth/login', {
+            // Bước 1: Gọi API Đăng ký
+            const registerRes = await fetch('http://localhost:3000/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
             
-            const data = await response.json();
+            const registerData = await registerRes.json();
             
-            if (data.success) {
-                if (rememberMe) {
-                    localStorage.setItem('saved_username', username);
+            if (registerData.success) {
+                // Bước 2: Tự động Đăng nhập ngay sau khi đăng ký thành công
+                const loginRes = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const loginData = await loginRes.json();
+                
+                if (loginData.success) {
+                    localStorage.setItem('user', JSON.stringify(loginData.user));
+                    localStorage.setItem('token', loginData.token);
+                    setUser(loginData.user);
+                    navigate('/'); // Chuyển thẳng vào Sảnh chờ
                 } else {
-                    localStorage.removeItem('saved_username');
+                    setError('Đăng ký thành công nhưng tự động đăng nhập thất bại.');
                 }
-                localStorage.setItem('user', JSON.stringify(data.user));
-                localStorage.setItem('token', data.token);
-                setUser(data.user);
-                // No need to navigate manually if App.jsx handles user state redirection, but just in case:
-                navigate('/');
             } else {
-                setError(data.message || 'Tài khoản hoặc mật khẩu không đúng!');
+                setError(registerData.message || 'Đăng ký thất bại!');
             }
         } catch (err) {
             console.error(err);
@@ -53,28 +51,28 @@ const Login = ({ setUser }) => {
 
     return (
         <motion.div 
-            initial={{ opacity: 0, x: -100 }}
+            initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 100 }}
+            exit={{ opacity: 0, x: -100 }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
             className="min-h-screen flex items-center justify-center p-4 font-sans relative z-10"
         >
             <motion.div 
-                initial={{ opacity: 0, y: 50, rotate: -2 }}
+                initial={{ opacity: 0, y: 50, rotate: 2 }}
                 animate={{ opacity: 1, y: 0, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.1 }}
                 className="bg-white border-4 border-black p-8 rounded-xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] max-w-md w-full relative"
             >
                 <motion.div 
-                    animate={{ rotate: 360 }}
+                    animate={{ rotate: -360 }}
                     transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                    className="absolute -top-6 -right-6 w-12 h-12 bg-[#FFD1C7] border-4 border-black rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center"
+                    className="absolute -top-6 -left-6 w-12 h-12 bg-[#fcdbbd] border-4 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center"
                 >
-                    <div className="w-3 h-3 bg-black rounded-full"></div>
+                    <div className="w-4 h-4 bg-black rotate-45"></div>
                 </motion.div>
 
                 <h1 className="text-4xl font-black text-center mb-8 tracking-tighter uppercase">
-                    Đăng Nhập
+                    Đăng Ký
                 </h1>
                 
                 <AnimatePresence>
@@ -83,7 +81,7 @@ const Login = ({ setUser }) => {
                             initial={{ opacity: 0, height: 0, scale: 0.9 }}
                             animate={{ opacity: 1, height: 'auto', scale: 1 }}
                             exit={{ opacity: 0, height: 0, scale: 0.9 }}
-                            className="mb-6 p-3 bg-[#FFD1C7] border-4 border-black font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-hidden rounded-lg"
+                            className="mb-6 p-3 bg-[#FFD1C7] border-4 border-black font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg"
                         >
                             {error}
                         </motion.div>
@@ -92,7 +90,7 @@ const Login = ({ setUser }) => {
                 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                     <motion.div whileTap={{ scale: 0.98 }}>
-                        <label className="block font-black mb-2 uppercase text-sm">Tài Khoản</label>
+                        <label className="block font-black mb-2 uppercase text-sm">Tài Khoản Mới</label>
                         <input 
                             type="text" 
                             value={username}
@@ -123,39 +121,26 @@ const Login = ({ setUser }) => {
                             </button>
                         </div>
                     </motion.div>
-
-                    <div className="flex items-center gap-2 mt-1">
-                        <input 
-                            type="checkbox" 
-                            id="rememberMe"
-                            checked={rememberMe}
-                            onChange={(e) => setRememberMe(e.target.checked)}
-                            className="w-5 h-5 border-4 border-black accent-[#FFD1C7] cursor-pointer rounded-sm"
-                        />
-                        <label htmlFor="rememberMe" className="font-bold cursor-pointer select-none">
-                            Ghi nhớ tài khoản
-                        </label>
-                    </div>
                     
                     <motion.button 
-                        whileHover={{ scale: 1.03, rotate: -1 }}
+                        whileHover={{ scale: 1.03, rotate: 1 }}
                         whileTap={{ scale: 0.95 }}
                         type="submit"
-                        className="w-full bg-[#FFD1C7] font-black text-xl py-4 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[4px] hover:translate-x-[4px] transition-all mt-2 uppercase tracking-widest rounded-lg"
+                        className="w-full bg-[#fce4d6] font-black text-xl py-4 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[4px] hover:translate-x-[4px] transition-all mt-2 uppercase tracking-widest rounded-lg"
                     >
-                        VÀO CHAT
+                        HOÀN TẤT ĐĂNG KÝ
                     </motion.button>
                 </form>
                 
                 <div className="mt-8 pt-6 border-t-4 border-black text-center font-bold text-base">
-                    <p>Chưa có tài khoản?</p>
+                    <p>Đã có tài khoản?</p>
                     <motion.button 
-                        whileHover={{ scale: 1.1, rotate: 2 }}
+                        whileHover={{ scale: 1.1, rotate: -2 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => navigate('/register')}
-                        className="mt-2 bg-white border-4 border-black px-6 py-2 uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FFD1C7] transition-colors rounded-lg"
+                        onClick={() => navigate('/login')}
+                        className="mt-2 bg-white border-4 border-black px-6 py-2 uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-colors rounded-lg"
                     >
-                        Đăng ký ngay
+                        Quay lại Đăng nhập
                     </motion.button>
                 </div>
             </motion.div>
@@ -163,4 +148,4 @@ const Login = ({ setUser }) => {
     );
 };
 
-export default Login;
+export default Register;
