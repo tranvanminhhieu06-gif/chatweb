@@ -45,7 +45,7 @@ app.get('/api/messages/:roomId', async (req, res) => {
             WHERE m.room_id = ?
             ORDER BY m.created_at ASC
         `, [roomId]);
-        
+
         res.json({ success: true, messages });
     } catch (error) {
         console.error('Lỗi lấy tin nhắn:', error);
@@ -81,7 +81,7 @@ io.on('connection', (socket) => {
                 ...data,
                 created_at: new Date().toISOString()
             };
-            
+
             io.to(data.roomId).emit('receive_message', messageData);
         } catch (error) {
             console.error('Lỗi khi lưu tin nhắn:', error);
@@ -94,7 +94,7 @@ io.on('connection', (socket) => {
 });
 
 // Chạy server trên port chỉ định
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`🚀 Server đang vận hành mượt mà tại port http://localhost:${PORT}`);
 });

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import { motion } from 'framer-motion';
 
-// Kết nối tới server backend
-const socket = io.connect('http://localhost:5000');
+// Kết nối tới server backend trên Render (Hãy thay bằng link Render của bạn)
+const socket = io.connect('https://chatweb-backend.onrender.com');
 
 const ChatRoom = ({ currentUser, currentRoomId }) => {
     const [currentMessage, setCurrentMessage] = useState('');
@@ -13,10 +13,10 @@ const ChatRoom = ({ currentUser, currentRoomId }) => {
     useEffect(() => {
         const fetchOldMessages = async () => {
             try {
-                // Nhớ thay đổi port nếu backend của bạn chạy port khác
-                const response = await fetch(`http://localhost:5000/api/messages/${currentRoomId}`);
+                // Đã thay đổi địa chỉ localhost thành link Render của bạn
+                const response = await fetch(`https://chatweb-backend.onrender.com/api/messages/${currentRoomId}`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     // Map lại dữ liệu để khớp với cấu trúc hiển thị
                     const formattedMessages = data.messages.map(msg => ({
