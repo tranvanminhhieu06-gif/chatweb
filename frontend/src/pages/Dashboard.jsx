@@ -24,10 +24,12 @@ const ChatRoom = ({ currentUser, currentRoomId, onBack }) => {
 
                 if (data.success) {
                     const formattedMessages = data.messages.map(msg => ({
-                        roomId: msg.room_id,
-                        userId: msg.user_id,
+                        id: msg.id || `old-${Date.now()}-${Math.random()}`,
+                        room_id: msg.room_id,
+                        user_id: msg.user_id,
                         username: msg.username,
-                        content: msg.content
+                        content: msg.content,
+                        created_at: msg.created_at
                     }));
                     setMessageList(formattedMessages);
                 }
@@ -57,17 +59,28 @@ const ChatRoom = ({ currentUser, currentRoomId, onBack }) => {
     }, [messageList]);
 
     const sendMessage = async () => {
-        if (currentMessage.trim() !== '') {
-            const messageData = {
-                roomId: currentRoomId,
-                userId: currentUser.id,
-                username: currentUser.username,
-                content: currentMessage,
-            };
+        if (currentMessage.trim() === '') return;
 
-            await socket.emit('send_message', messageData);
-            setCurrentMessage('');
-        }
+        const messageData = {
+            room_id: Number(currentRoomId),
+            user_id: currentUser.id,
+            username: currentUser.username,
+            content: currentMessage,
+        };
+
+        // 🔥 TỐI ƯU OPTIMISTIC UI: Tạo tin nhắn tạm thời hiển thị ngay lập tức
+        const localMessage = {
+            ...messageData,
+            id: `temp-${Date.now()}`, // Tạo ID tạm để làm key render trong React
+            created_at: new Date()
+        };
+
+        // Đẩy thẳng vào màn hình người gửi luôn, không chờ đợi ai cả
+        setMessageList((list) => [...list, localMessage]);
+        setCurrentMessage('');
+
+        // Bắn qua Socket cho server xử lý lưu DB và chuyển tiếp
+        await socket.emit('send_message', messageData);
     };
 
     return (
@@ -100,10 +113,10 @@ const ChatRoom = ({ currentUser, currentRoomId, onBack }) => {
                 backgroundSize: '20px 20px'
             }}>
                 {messageList.map((msg, index) => {
-                    const isMe = msg.userId === currentUser.id;
+                    const isMe = msg.user_id === currentUser.id;
                     return (
                         <motion.div
-                            key={index}
+                            key={msg.id || index}
                             initial={{ opacity: 0, y: 30, scale: 0.8 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             transition={{ type: "spring", stiffness: 300, damping: 20 }}

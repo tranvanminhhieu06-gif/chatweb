@@ -67,24 +67,30 @@ io.on('connection', (socket) => {
 
     // 2. Xử lý khi người dùng gửi tin nhắn
     socket.on('send_message', async (data) => {
-        // data mong đợi: { roomId, userId, username, content }
         try {
-            // Lưu tin nhắn vào MySQL để giữ lịch sử
-            await db.query(
+            // 1. Lưu thẳng vào MySQL (Cột PASSWORD viết hoa nếu có liên quan, các cột khác viết thường)
+            const [result] = await db.query(
                 'INSERT INTO messages (room_id, user_id, content) VALUES (?, ?, ?)',
-                [data.roomId, data.userId, data.content]
+                [data.room_id, data.user_id, data.content]
             );
 
-            // Gửi tin nhắn đến TẤT CẢ mọi người trong phòng (bao gồm cả người gửi để hiển thị mượt mà)
-            // Kèm theo thời gian thực để Frontend hiển thị
-            const messageData = {
-                ...data,
-                created_at: new Date().toISOString()
+            // 2. Đóng gói dữ liệu CHUẨN ĐÃ CÓ ID TỪ DATABASE để gửi cho người khác
+            const fullMessageData = {
+                id: result.insertId, // ID xịn từ MySQL sinh ra
+                room_id: data.room_id,
+                user_id: data.user_id,
+                username: data.username,
+                content: data.content,
+                created_at: new Date() // Gắn tạm thời gian hiện tại, hoặc lấy chuẩn từ DB
             };
 
-            io.to(data.roomId).emit('receive_message', messageData);
+            // 3. Phát sóng cho tất cả mọi người trong phòng TRỪ người gửi
+            socket.broadcast.to(data.room_id).emit('receive_message', fullMessageData);
+
         } catch (error) {
-            console.error('Lỗi khi lưu tin nhắn:', error);
+            console.error('Lỗi lưu hoặc truyền tin nhắn:', error);
+            // Có thể emit một sự kiện lỗi ngược về cho chính người gửi nếu muốn
+            socket.emit('message_error', { content: data.content, message: 'Không thể gửi tin nhắn' });
         }
     });
 
