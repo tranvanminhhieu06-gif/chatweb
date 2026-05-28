@@ -77,7 +77,7 @@ router.post('/login', async (req, res) => {
         const user = users[0];
 
         // So sánh mật khẩu nhập vào với mật khẩu đã mã hóa trong database
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(password, user.PASSWORD);
         if (!isMatch) {
             return res.status(400).json({ success: false, message: 'Tài khoản hoặc mật khẩu không đúng' });
         }
