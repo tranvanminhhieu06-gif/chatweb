@@ -1,75 +1,87 @@
 import React, { useEffect, useState } from 'react';
 
 const LoginSuccessBanner = ({ username, onComplete }) => {
-  // Trạng thái vòng đời hiệu ứng: 'hidden' -> 'drop' -> 'expand' -> 'reveal' -> 'fadeout'
-  const [animationState, setAnimationState] = useState('hidden');
+  // Trạng thái vòng đời timeline: 'hidden' -> 'drop' -> 'expand' -> 'reveal' -> 'collapse' -> 'flyup'
+  const [stage, setStage] = useState('hidden');
 
   useEffect(() => {
-    // 1. Kích hoạt quả cầu rơi từ trên xuống ngay lập tức
-    setAnimationState('drop');
+    // 1. Quả cầu xuất hiện và rơi từ trên xuống
+    setStage('drop');
 
-    // 2. Sau 600ms (khi quả cầu chạm tâm), chuyển sang hiệu ứng giãn rộng ra 2 bên
-    const timerExpand = setTimeout(() => {
-      setAnimationState('expand');
-    }, 600);
+    // 2. Chạm tâm sau 600ms -> Ngay lập tức co giãn thành thanh ngang dài
+    const timerExpand = setTimeout(() => setStage('expand'), 600);
 
-    // 3. Sau 1100ms (khi thanh ngang giãn xong), cho nội dung bên trong hiện ra
-    const timerReveal = setTimeout(() => {
-      setAnimationState('reveal');
-    }, 1100);
+    // 3. Thanh ngang giãn xong sau 1100ms -> Hiện chữ và toàn bộ icon/avatar
+    const timerReveal = setTimeout(() => setStage('reveal'), 1100);
 
-    // 4. Giữ hiển thị 2.5 giây rồi tiến hành mờ dần toàn bộ (Fade out)
-    const timerFadeOut = setTimeout(() => {
-      setAnimationState('fadeout');
-    }, 3600);
+    // 4. Giữ hiển thị nội dung trong 2.5 giây, sau đó gộp lại thành hình tròn (Collapse) tại mốc 3600ms
+    const timerCollapse = setTimeout(() => setStage('collapse'), 3600);
 
-    // 5. Kết thúc hoàn toàn và chuyển trang
+    // 5. Gộp xong thành hình tròn sau 4100ms -> Bắn vút thẳng lên trời (Fly up)
+    const timerFlyUp = setTimeout(() => setStage('flyup'), 4100);
+
+    // 6. Biến mất hoàn toàn khỏi màn hình và kích hoạt chuyển trang (onComplete) tại mốc 4700ms
     const timerComplete = setTimeout(() => {
       if (onComplete) onComplete();
-    }, 4100);
+    }, 4700);
 
     return () => {
-      clearTimeout(timerExpand);
-      clearTimeout(timerReveal);
-      clearTimeout(timerFadeOut);
-      clearTimeout(timerComplete);
+      [timerExpand, timerReveal, timerCollapse, timerFlyUp, timerComplete].forEach(clearTimeout);
     };
   }, [onComplete]);
 
-  if (animationState === 'hidden') return null;
+  if (stage === 'hidden') return null;
 
   return (
     <>
-      {/* Nhúng mã Keyframe CSS để tạo độ nảy mượt mà cho quả cầu rơi */}
+      {/* ⚙️ ENGINE KEYFRAMES: Xử lý tăng tốc phần cứng giúp hiệu ứng mượt tuyệt đối */}
       <style>{`
-        @keyframes circleDropFromTop {
-          0% { transform: translateY(-100vh) scale(0.3); opacity: 0; }
-          60% { transform: translateY(20px) scale(1.1); opacity: 1; }
-          80% { transform: translateY(-10px) scale(0.95); }
+        @keyframes sphereDrop {
+          0% { transform: translateY(-100vh) scale(0.4); opacity: 0; }
+          60% { transform: translateY(15px) scale(1.05); opacity: 1; }
+          80% { transform: translateY(-8px) scale(0.98); }
           100% { transform: translateY(0) scale(1); }
         }
-        .animate-circle-drop {
-          animation: circleDropFromTop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        @keyframes sphereFlyUp {
+          0% { transform: translateY(0) scale(1); opacity: 1; }
+          30% { transform: translateY(20px) scale(1.05); }
+          100% { transform: translateY(-100vh) scale(0.4); opacity: 0; }
         }
+        @keyframes shockwaveLoang {
+          0% { transform: scale(0); opacity: 1; border-width: 6px; }
+          100% { transform: scale(3.5); opacity: 0; border-width: 1px; }
+        }
+        .animate-drop { animation: sphereDrop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards; }
+        .animate-flyup { animation: sphereFlyUp 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards; }
+        .animate-shockwave { animation: shockwaveLoang 0.5s ease-out forwards; }
       `}</style>
 
-      {/* LỚP NỀN OVERLAY TỐI MỜ CỦA GAME */}
-      <div 
-        className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-500
-          ${animationState === 'fadeout' ? 'opacity-0' : 'opacity-100'}`}
-      >
-        {/* BANNER CHÍNH: Thay đổi hình dạng từ hình tròn sang thanh ngang */}
+      {/* LỚP NỀN OVERLAY TỐI ĐIỆN ẢNH */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm transition-opacity duration-500">
+        
+        {/* HIỆU ỨNG SÓNG XUNG KÍCH KHI VA CHẠM (SHOCKWAVE) */}
+        {stage === 'expand' && (
+          <div className="absolute w-44 h-44 border-2 border-[#ff6b6b] rounded-full animate-shockwave pointer-events-none" />
+        )}
+
+        {/* ========================================================================= */}
+        {/* BANNER ĐA TRẠNG THÁI (MORPHING BANNER CONTAINER)                          */}
+        {/* ========================================================================= */}
         <div
-          className={`bg-[#141414] border-4 border-black flex items-center justify-between px-8 shadow-[12px_12px_0px_0px_#000] transform transition-all ease-in-out
-            ${animationState === 'drop' ? 'animate-circle-drop w-20 h-20 rounded-full' : ''}
-            ${animationState === 'expand' || animationState === 'reveal' || animationState === 'fadeout' 
-              ? 'w-full max-w-2xl h-28 rounded-2xl duration-500' : ''}`}
+          className={`bg-[#141414] border-4 border-black flex items-center justify-between shadow-[12px_12px_0px_0px_#000] transform transition-all duration-500 ease-in-out
+            ${stage === 'drop' ? 'animate-drop w-20 h-20 rounded-full px-0' : ''}
+            
+            ${stage === 'expand' ? 'w-full max-w-2xl h-28 rounded-2xl px-8' : ''}
+            ${stage === 'reveal' ? 'w-full max-w-2xl h-28 rounded-2xl px-8' : ''}
+            
+            ${stage === 'collapse' ? 'w-20 h-20 rounded-full px-0' : ''}
+            ${stage === 'flyup' ? 'animate-flyup w-20 h-20 rounded-full px-0' : ''}`}
         >
           
-          {/* NỘI DUNG CHỈ HIỂN THỊ KHI BANNER ĐÃ GIÃN XONG */}
+          {/* KHUNG NỘI DUNG BÊN TRONG: Chỉ mở hiển thị khi ở trạng thái 'reveal' */}
           <div 
-            className={`w-full flex items-center justify-between transition-opacity duration-300
-              ${animationState === 'reveal' ? 'opacity-100' : 'opacity-0'}`}
+            className={`w-full flex items-center justify-between transition-all duration-300 transform
+              ${stage === 'reveal' ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2 pointer-events-none'}`}
           >
             
             {/* 👈 BÊN TRÁI: ICON HÌNH NGƯỜI */}
@@ -79,25 +91,27 @@ const LoginSuccessBanner = ({ username, onComplete }) => {
               </svg>
             </div>
 
-            {/* 🎯 Ở GIỮA: CHỮ LỚN LÀ TÊN TÀI KHOẢN, CHỮ NHỎ LÀ TRẠNG THÁI */}
+            {/* 🎯 Ở GIỮA: CHỮ LỚN TÊN TÀI KHOẢN & CHỮ NHỎ "Free Access" */}
             <div className="flex flex-col items-center justify-center text-center flex-grow mx-4">
-              {/* Chữ lớn: Tên tài khoản */}
-              <h1 className="text-white font-black text-3xl md:text-4xl tracking-wide uppercase font-['Space_Grotesk'] drop-shadow-[2px_2px_0px_#000]">
+              {/* Chữ lớn tên tài khoản */}
+              <h1 className="text-white font-black text-3xl md:text-4xl tracking-wider uppercase font-['Space_Grotesk'] drop-shadow-[2.5px_2.5px_0px_#000]">
                 {username}
               </h1>
-              {/* Chữ nhỏ: Thông báo đăng nhập thành công */}
-              <p className="text-[#ff6b6b] font-bold text-xs md:text-sm tracking-[0.2em] uppercase mt-1">
-                ĐĂNG NHẬP THÀNH CÔNG
+              {/* Chữ nhỏ trạng thái quyền truy cập */}
+              <p className="text-[#ff6b6b] font-extrabold text-xs md:text-sm tracking-[0.25em] uppercase mt-1">
+                Free Access
               </p>
             </div>
 
-            {/* 👉 BÊN PHẢI: KHUNG ẨN ĐỐI XỨNG (ĐÃ BỎ AVATAR NHƯNG GIỮ KHUNG ĐỂ CÂN BẰNG TÂM) */}
-            <div className="flex-shrink-0 w-12 h-12 invisible">
-              {/* Mục này ẩn đi giúp phần chữ ở giữa luôn được neo chính xác tại tâm của banner */}
+            {/* 👉 BÊN PHẢI: AVATAR ĐỐI XỨNG CÂN BẰNG GIAO DIỆN */}
+            <div className="flex-shrink-0 w-12 h-12 bg-[#ffb8b8] border-2 border-black rounded-xl overflow-hidden shadow-[3px_3px_0px_0px_#000] flex items-center justify-center">
+              {/* Bạn có thể thay thẻ ẩn này bằng một hình ảnh avatar thật <img src={...} /> */}
+              <div className="w-8 h-8 rounded-full bg-black/10 border border-black/20" />
             </div>
 
           </div>
         </div>
+
       </div>
     </>
   );
