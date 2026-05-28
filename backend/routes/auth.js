@@ -40,9 +40,9 @@ router.post('/register', async (req, res) => {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // Lưu thông tin người dùng mới vào database
+        // 5. CHẠY LỆNH SQL ĐỂ ĐẨY DỮ LIỆU VÀO MYSQL (PASSWORD viết hoa chuẩn Workbench)
         await db.query(
-            'INSERT INTO users (username, password, avatar_url) VALUES (?, ?, ?)',
+            'INSERT INTO users (username, PASSWORD, avatar_url) VALUES (?, ?, ?)',
             [username, hashedPassword, avatar_url || null]
         );
 
