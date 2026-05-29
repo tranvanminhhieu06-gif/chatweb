@@ -32,24 +32,33 @@ app.get('/', (req, res) => {
 });
 
 // ==========================================
-// API LẤY LỊCH SỬ TIN NHẮN THEO PHÒNG
+// API LẤY LỊCH SỬ TIN NHẮN THEO PHÒNG (GET: http://localhost:3000/api/messages/:roomId)
 // ==========================================
 app.get('/api/messages/:roomId', async (req, res) => {
     const { roomId } = req.params;
+
     try {
-        // Lấy tin nhắn cùng với tên người gửi thông qua JOIN bảng users
-        const [messages] = await db.query(`
-            SELECT m.*, u.username 
+        // Câu lệnh SQL "thần thánh" kết hợp 2 bảng để lấy tin nhắn kèm tên người gửi
+        const [rows] = await db.query(`
+            SELECT 
+                m.id, 
+                m.room_id, 
+                m.user_id, 
+                m.content, 
+                m.created_at, 
+                u.username 
             FROM messages m
             JOIN users u ON m.user_id = u.id
             WHERE m.room_id = ?
             ORDER BY m.created_at ASC
         `, [roomId]);
 
-        res.json({ success: true, messages });
+        // Trả danh sách tin nhắn cũ về cho Frontend
+        return res.json({ success: true, messages: rows });
+
     } catch (error) {
-        console.error('Lỗi lấy tin nhắn:', error);
-        res.status(500).json({ success: false, message: 'Lỗi server' });
+        console.error('Lỗi lấy lịch sử tin nhắn:', error);
+        return res.status(500).json({ success: false, message: 'Không thể tải lịch sử đoạn chat' });
     }
 });
 
